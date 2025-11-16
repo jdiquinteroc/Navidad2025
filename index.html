@@ -1,0 +1,278 @@
+<!DOCTYPE <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lista de Regalos de Navidad</title>
+
+    <!-- Animación de nieve -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(#f7fff7, #e6ffe6);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        header {
+            background: linear-gradient(90deg, #b30000, #006400);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        #contenedor {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+        }
+
+        img {
+            width: 100%;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #bbb;
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        button {
+            background: #c40000;
+            color: white;
+            padding: 12px 22px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #900000;
+        }
+
+        #tablaRegalos {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        #tablaRegalos th, #tablaRegalos td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        #tablaRegalos th {
+            background: #006400;
+            color: white;
+        }
+
+        .comprado {
+            background: #d4ffd4;
+            text-decoration: line-through;
+        }
+
+        /* Nieve */
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            color: white;
+            font-size: 20px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(110vh); }
+        }
+
+        /* Adaptación móvil */
+        @media(max-width: 600px) {
+            #contenedor { padding: 15px; }
+            button { width: 100%; margin: 5px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        // Crear nieve
+        for (let i = 0; i < 40; i++) {
+            const snow = document.createElement('div');
+            snow.classList.add('snowflake');
+            snow.innerHTML = '❄';
+            snow.style.left = Math.random() * 100 + 'vw';
+            snow.style.animationDuration = 3 + Math.random() * 7 + 's';
+            snow.style.opacity = Math.random();
+            document.body.appendChild(snow);
+        }
+    </script>
+
+    <header>
+        <h1>🎄 Lista de Regalos de Navidad Familiar 🎁</h1>
+        <p>Deja aquí lo que deseas para esta Navidad</p>
+    </header>
+
+    <div id="contenedor">
+
+        <img src="foto_navidad.jpg" alt="Foto Familiar" />
+
+        <div class="card">
+            <label for="persona">¿Quién eres?</label>
+            <select id="persona">
+                <option value="Papá">Papá 🎅</option>
+                <option value="Mamá">Mamá 🤶</option>
+                <option value="Juan Di">Juan Di 🎁</option>
+                <option value="Pipe">Pipe 🎄</option>
+                <option value="Juanis">Juanis ⭐</option>
+            </select>
+
+            <label for="descripcion">Descripción del regalo</label>
+            <textarea id="descripcion" rows="3"></textarea>
+
+            <label for="link">Link (opcional)</label>
+            <input type="url" id="link" />
+
+            <button onclick="guardarRegalo()">Guardar regalo</button>
+        </div>
+
+        <div class="card">
+            <h2>🔎 Filtros</h2>
+            <label for="filtroPersona">Filtrar por persona</label>
+            <select id="filtroPersona" onchange="filtrarPorPersona()">
+                <option value="todos">Todos</option>
+                <option value="Papá">Papá</option>
+                <option value="Mamá">Mamá</option>
+                <option value="Juan Di">Juan Di</option>
+                <option value="Pipe">Pipe</option>
+                <option value="Juanis">Juanis</option>
+            </select>
+
+            <input id="buscador" placeholder="Buscar..." onkeyup="buscarTexto()" />
+
+            <button onclick="exportarExcel()">📗 Exportar Excel</button>
+            <button onclick="exportarPDF()">📘 Exportar PDF</button>
+            <button onclick="sincronizarGoogle()">☁️ Sincronizar con Google Sheets</button>
+        </div>
+
+        <h2>📄 Lista de regalos</h2>
+        <table id="tablaRegalos">
+            <thead>
+                <tr>
+                    <th>Persona</th>
+                    <th>Descripción</th>
+                    <th>Link</th>
+                    <th>Comprado</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function guardarRegalo() {
+            const persona = document.getElementById('persona').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const link = document.getElementById('link').value;
+
+            if (!descripcion.trim()) {
+                alert("Escribe un regalo.");
+                return;
+            }
+
+            const regalo = { id: Date.now(), persona, descripcion, link, comprado: false };
+            const lista = JSON.parse(localStorage.getItem('regalos')) || [];
+            lista.push(regalo);
+            localStorage.setItem('regalos', JSON.stringify(lista));
+            actualizarTabla();
+        }
+
+        function eliminarRegalo(id) {
+            let lista = JSON.parse(localStorage.getItem('regalos')) || [];
+            lista = lista.filter(r => r.id !== id);
+            localStorage.setItem('regalos', JSON.stringify(lista));
+            actualizarTabla();
+        }
+
+        function marcarComprado(id) {
+            let lista = JSON.parse(localStorage.getItem('regalos')) || [];
+            lista = lista.map(r => r.id === id ? {...r, comprado: !r.comprado} : r);
+            localStorage.setItem('regalos', JSON.stringify(lista));
+            actualizarTabla();
+        }
+
+        function filtrarPorPersona() {
+            const p = document.getElementById('filtroPersona').value;
+            actualizarTabla(p);
+        }
+
+        function buscarTexto() {
+            const texto = document.getElementById('buscador').value.toLowerCase();
+            actualizarTabla(undefined, texto);
+        }
+
+        function actualizarTabla(filtro = "todos", texto = "") {
+            const cuerpo = document.getElementById('cuerpoTabla');
+            cuerpo.innerHTML = "";
+            let lista = JSON.parse(localStorage.getItem('regalos')) || [];
+
+            lista
+                .filter(r => filtro === "todos" || r.persona === filtro)
+                .filter(r => r.descripcion.toLowerCase().includes(texto))
+                .forEach(r => {
+                    const fila = document.createElement('tr');
+                    if (r.comprado) fila.classList.add('comprado');
+                    fila.innerHTML = `
+                        <td>${r.persona}</td>
+                        <td>${r.descripcion}</td>
+                        <td>${r.link ? `<a href="${r.link}" target="_blank">Ver</a>` : ''}</td>
+                        <td><button onclick="marcarComprado(${r.id})">✔️</button></td>
+                        <td><button onclick="eliminarRegalo(${r.id})">❌</button></td>
+                    `;
+                    cuerpo.appendChild(fila);
+                });
+        }
+
+        function exportarExcel() {
+            let lista = JSON.parse(localStorage.getItem('regalos')) || [];
+            let csv = "Persona,Descripción,Link,Comprado";
+            lista.forEach(r => csv += `${r.persona},"${r.descripcion}",${r.link || ''},${r.comprado}
+`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "regalos_navidad.csv";
+            a.click();
+        }
+
+        function exportarPDF() {
+            const w = window.open('', '_blank');
+            w.document.write('<h1>Lista de Regalos</h1>');
+            let lista = JSON.parse(localStorage.getItem('regalos')) || [];
+            lista.forEach(r => w.document.write(`<p><strong>${r.persona}</strong>: ${r.descripcion}</p>`));
+            w.print();
+        }
+
+        function sincronizarGoogle() {
+            alert("Para sincronizar con Google Sheets debes usar Apps Script. Puedo crearte el script si quieres.");
+        }
+
+        actualizarTabla();
+    </script>
+</body>
+</html>
